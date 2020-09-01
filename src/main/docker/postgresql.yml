@@ -1,0 +1,11 @@
+version: '2'
+services:
+  suncrafterina-postgresql:
+    image: postgres:12.1
+    # volumes:
+    #     - ~/volumes/jhipster/suncrafterina/postgresql/:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=suncrafterina
+      - POSTGRES_PASSWORD=
+    ports:
+      - 5432:5432
