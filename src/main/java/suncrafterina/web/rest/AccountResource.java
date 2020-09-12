@@ -1,12 +1,12 @@
 package suncrafterina.web.rest;
 
+import org.zalando.problem.Status;
 import suncrafterina.domain.User;
 import suncrafterina.repository.UserRepository;
 import suncrafterina.security.SecurityUtils;
 import suncrafterina.service.MailService;
 import suncrafterina.service.UserService;
-import suncrafterina.service.dto.PasswordChangeDTO;
-import suncrafterina.service.dto.UserDTO;
+import suncrafterina.service.dto.*;
 import suncrafterina.web.rest.errors.*;
 import suncrafterina.web.rest.vm.KeyAndPasswordVM;
 import suncrafterina.web.rest.vm.ManagedUserVM;
@@ -60,9 +60,11 @@ public class AccountResource {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public void registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) {
-        if (!checkPasswordLength(managedUserVM.getPassword())) {
+   /*     if (!checkPasswordLength(managedUserVM.getPassword())) {
             throw new InvalidPasswordException();
         }
+
+    */
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
         mailService.sendActivationEmail(user);
     }
@@ -184,4 +186,49 @@ public class AccountResource {
             password.length() >= ManagedUserVM.PASSWORD_MIN_LENGTH &&
             password.length() <= ManagedUserVM.PASSWORD_MAX_LENGTH;
     }
+
+    @PostMapping("/register-user")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Map<String,Object> registerUserAccount(@Valid @RequestBody RegisterUserDto registerUserDto) {
+        User user = userService.registerNewUser(registerUserDto);
+        mailService.sendActivationEmail(user);
+        Map<String,Object> data = new LinkedHashMap<>();
+        data.put("email",user.getEmail());
+        return data;
+    }
+
+    /**
+     *{@code POST  /verify-code} : verify the email of registered user.
+     * @param verificationCode verification code
+     * @throws CustomException VerificationCodeNotMatchedException {@code 400(Bad Request)} if the verification code not matched
+     */
+    @PostMapping("/verify-code")
+    public  Map<String,String> verifyCode(@Valid @RequestBody VerificationCode verificationCode){
+        Optional<User> user = userService.verification(verificationCode.getVerification_code());
+        if(!user.isPresent())
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.VERIFICATION_CODE_NOT_MATCHED,null);
+        Map<String,String> data = new LinkedHashMap<>();
+        data.put("message","Email Verified");
+        return data;
+    }
+
+    /**
+     * {@code POST  /resend-verification} : resend the verification code.
+     * @param emailDto email of the registered user.
+     *@return email & verification code
+     */
+    @PostMapping("/resend-verification")
+    public Map<String,Object> resendVerificationCode(@Valid @RequestBody EmailDto emailDto){
+        Optional<User> user = userService.resendVerificationCode(emailDto.getEmail());
+        Map<String,Object> data = new LinkedHashMap<>();
+        if(user.isPresent()){
+            mailService.sendActivationEmail(user.get());
+            data.put("email",user.get().getEmail());
+            data.put("message","6-digit verification code is resent on your Registered Email Address");
+            return data;
+        }
+        else
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.EMAIL_NOT_FOUND,null);
+    }
+
 }

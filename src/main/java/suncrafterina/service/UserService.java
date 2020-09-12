@@ -1,5 +1,7 @@
 package suncrafterina.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.zalando.problem.Status;
 import suncrafterina.config.Constants;
 import suncrafterina.domain.Authority;
 import suncrafterina.domain.User;
@@ -7,6 +9,7 @@ import suncrafterina.repository.AuthorityRepository;
 import suncrafterina.repository.UserRepository;
 import suncrafterina.security.AuthoritiesConstants;
 import suncrafterina.security.SecurityUtils;
+import suncrafterina.service.dto.RegisterUserDto;
 import suncrafterina.service.dto.UserDTO;
 
 import io.github.jhipster.security.RandomUtil;
@@ -20,6 +23,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import suncrafterina.web.rest.errors.CustomException;
+import suncrafterina.web.rest.errors.SunCraftStatusCode;
+import suncrafterina.web.rest.vm.LoginVM;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -42,6 +48,9 @@ public class UserService {
     private final AuthorityRepository authorityRepository;
 
     private final CacheManager cacheManager;
+
+    @Autowired
+    private HelperService helperService;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthorityRepository authorityRepository, CacheManager cacheManager) {
         this.userRepository = userRepository;
@@ -113,7 +122,7 @@ public class UserService {
         newUser.setImageUrl(userDTO.getImageUrl());
         newUser.setLangKey(userDTO.getLangKey());
         // new user is not active
-        newUser.setActivated(false);
+        newUser.setActivated(true);
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
         Set<Authority> authorities = new HashSet<>();
@@ -303,4 +312,75 @@ public class UserService {
             Objects.requireNonNull(cacheManager.getCache(UserRepository.USERS_BY_EMAIL_CACHE)).evict(user.getEmail());
         }
     }
+
+    public User checkUsernamePassword(LoginVM loginVM){
+        String email = loginVM.getUsername().toLowerCase().trim();
+        Optional<User> user = userRepository.findOneByLoginIgnoreCase(email);
+        if (user.isPresent())
+            return user.get();
+        return null;
+    }
+
+    public String getRole(User user){
+        User user1 = userRepository.findOneByLoginIgnoreCase(user.getEmail()).get();
+        return user1.getAuthorities().iterator().next().getName();
+    }
+
+    public User registerNewUser(RegisterUserDto userDTO) {
+        userRepository.findOneByLogin(userDTO.getEmail().toLowerCase()).ifPresent(existingUser -> {
+            /*boolean removed = removeNonActivatedUser(existingUser);
+            if (!removed) {
+                throw new CustomException(Status.BAD_REQUEST,HytxStatusCode.EMAIL_ALREADY_EXIST,null);
+            }*/
+            if(existingUser.getActivated()){
+                throw new CustomException(Status.BAD_REQUEST, SunCraftStatusCode.EMAIL_ALREADY_EXIST,null);
+            }
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.EMAIL_NOT_VERIFIED,null);
+        });
+
+        User newUser = new User();
+        String encryptedPassword = passwordEncoder.encode(userDTO.getPassword());
+        newUser.setLogin(userDTO.getEmail().toLowerCase().trim());
+        // new user gets initially a generated password
+        newUser.setPassword(encryptedPassword);
+        newUser.setEmail(userDTO.getEmail().toLowerCase().trim());
+        newUser.setActivated(false);
+        // new user gets registration key
+        newUser.setActivationKey(helperService.generatePin());
+        Set<Authority> authorities = new HashSet<>();
+        if(userDTO.getRole().equalsIgnoreCase("customer"))
+            authorityRepository.findById(AuthoritiesConstants.CUSTOMER).ifPresent(authorities::add);
+        else if(userDTO.getRole().equalsIgnoreCase("factory"))
+            authorityRepository.findById(AuthoritiesConstants.FACTORY_VENDOR).ifPresent(authorities::add);
+        newUser.setLangKey("en");
+        newUser.setAuthorities(authorities);
+        //newUser.setCurrency("USD");
+        userRepository.save(newUser);
+        log.debug("Created Information for User: {}", newUser);
+        return newUser;
+    }
+
+    public Optional<User> verification(String verification_code){
+        Optional<User> user = userRepository.findOneByActivationKey(verification_code);
+        if(!user.isPresent())
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.VERIFICATION_CODE_NOT_MATCHED,null);
+        if(!user.get().getLastModifiedDate().isAfter(Instant.now().minusSeconds(600))){
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.VERIFICATION_CODE_EXPIRED,null);
+        }
+        user.get().setActivated(true);
+        user.get().setActivationKey(null);
+        userRepository.save(user.get());
+        return user;
+    }
+
+    public Optional<User> resendVerificationCode(String mail) {
+        Optional<User> user = userRepository.findOneByEmailIgnoreCase(mail);
+        if(user.isPresent()){
+            user.get().setActivationKey(HelperService.generatePin());
+            //user.get().setLastModifiedDate(Instant.now());
+            userRepository.save(user.get());
+        }
+        return user;
+    }
+
 }

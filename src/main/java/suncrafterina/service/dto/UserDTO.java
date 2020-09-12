@@ -1,5 +1,6 @@
 package suncrafterina.service.dto;
 
+import lombok.Data;
 import suncrafterina.config.Constants;
 
 import suncrafterina.domain.Authority;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 /**
  * A DTO representing a user, with his authorities.
  */
+@Data
 public class UserDTO {
 
     private Long id;

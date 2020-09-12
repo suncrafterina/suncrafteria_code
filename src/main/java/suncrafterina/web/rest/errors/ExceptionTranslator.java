@@ -1,124 +1,211 @@
 package suncrafterina.web.rest.errors;
 
-import io.github.jhipster.web.util.HeaderUtil;
 
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.NativeWebRequest;
-import org.zalando.problem.DefaultProblem;
-import org.zalando.problem.Problem;
-import org.zalando.problem.ProblemBuilder;
-import org.zalando.problem.Status;
+import org.zalando.problem.*;
 import org.zalando.problem.spring.web.advice.ProblemHandling;
 import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
 import org.zalando.problem.violations.ConstraintViolationProblem;
+import suncrafterina.security.UserNotActivatedException;
+import suncrafterina.service.UserService;
+import suncrafterina.web.rest.util.HeaderUtil;
+import suncrafterina.web.rest.vm.LoginVM;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
+import java.net.URI;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * Controller advice to translate the server side exceptions to client-friendly json structures.
- * The error response follows RFC7807 - Problem Details for HTTP APIs (https://tools.ietf.org/html/rfc7807).
+ * The error response follows RFC7807 - Problem Details for HTTP APIs (https://tools.ietf.org/html/rfc7807)
  */
 @ControllerAdvice
-public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait {
-
-    private static final String FIELD_ERRORS_KEY = "fieldErrors";
-    private static final String MESSAGE_KEY = "message";
-    private static final String PATH_KEY = "path";
-    private static final String VIOLATIONS_KEY = "violations";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
+public class ExceptionTranslator implements ProblemHandling {
 
     /**
-     * Post-process the Problem payload to add the message key for the front-end if needed.
+     * Post-process the Problem payload to add the message key for the front-end if needed
      */
+    private final Logger log = LoggerFactory.getLogger(UserService.class);
+
+    @Autowired
+    private MessageSource messageSource;
+
     @Override
     public ResponseEntity<Problem> process(@Nullable ResponseEntity<Problem> entity, NativeWebRequest request) {
         if (entity == null) {
             return entity;
         }
+
         Problem problem = entity.getBody();
-        if (!(problem instanceof ConstraintViolationProblem || problem instanceof DefaultProblem)) {
+        if (!(problem instanceof ConstraintViolationProblem
+            || problem instanceof DefaultProblem || problem instanceof CustomException)) {
             return entity;
         }
-        ProblemBuilder builder = Problem.builder()
-            .withType(Problem.DEFAULT_TYPE.equals(problem.getType()) ? ErrorConstants.DEFAULT_TYPE : problem.getType())
-            .withStatus(problem.getStatus())
-            .withTitle(problem.getTitle())
-            .with(PATH_KEY, request.getNativeRequest(HttpServletRequest.class).getRequestURI());
 
-        if (problem instanceof ConstraintViolationProblem) {
-            builder
-                .with(VIOLATIONS_KEY, ((ConstraintViolationProblem) problem).getViolations())
-                .with(MESSAGE_KEY, ErrorConstants.ERR_VALIDATION);
+        String path = request.getNativeRequest(HttpServletRequest.class).getRequestURI();
+        ExceptionResponseEntity exResponse;
+
+        if (problem instanceof CustomException) {
+            exResponse = new ExceptionResponseEntity(problem.getType(), problem.getStatus().getReasonPhrase(),
+                problem.getStatus(), problem.getDetail(), problem.getInstance(),
+                ((CustomException) problem).getMessage(), path, ((CustomException) problem).getCause(),
+                ((CustomException) problem).getSunCraftStatusCode(), problem.getParameters(), messageSource);
+
+        } else if (problem instanceof ConstraintViolationProblem) {
+
+            URI type = Problem.DEFAULT_TYPE.equals(problem.getType()) ? ErrorConstants.DEFAULT_TYPE : problem.getType();
+
+            Map<String, Object> map = new HashMap<>();
+            map.put("violations", ((ConstraintViolationProblem) problem).getViolations());
+
+            exResponse = new ExceptionResponseEntity(type, problem.getTitle(), problem.getStatus(), problem.getDetail(),
+                problem.getInstance(), ErrorConstants.ERR_VALIDATION, path,
+                ((ConstraintViolationProblem) problem).getCause(), null, map, messageSource);
+
         } else {
-            builder
-                .withCause(((DefaultProblem) problem).getCause())
-                .withDetail(problem.getDetail())
-                .withInstance(problem.getInstance());
-            problem.getParameters().forEach(builder::with);
-            if (!problem.getParameters().containsKey(MESSAGE_KEY) && problem.getStatus() != null) {
-                builder.with(MESSAGE_KEY, "error.http." + problem.getStatus().getStatusCode());
+
+            URI type = Problem.DEFAULT_TYPE.equals(problem.getType()) ? ErrorConstants.DEFAULT_TYPE : problem.getType();
+
+            String message = null;
+            if (!problem.getParameters().containsKey("message") && problem.getStatus() != null) {
+                message = "error.http." + problem.getStatus().getStatusCode();
             }
+            exResponse = new ExceptionResponseEntity(type, problem.getTitle(), problem.getStatus(), problem.getDetail(),
+                problem.getInstance(), message, path, ((DefaultProblem) problem).getCause(), null,
+                problem.getParameters(), messageSource);
+
         }
-        return new ResponseEntity<>(builder.build(), entity.getHeaders(), entity.getStatusCode());
+        return new ResponseEntity<>(exResponse.build(), entity.getHeaders(), entity.getStatusCode());
     }
 
     @Override
     public ResponseEntity<Problem> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, @Nonnull NativeWebRequest request) {
+
         BindingResult result = ex.getBindingResult();
         List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream()
-            .map(f -> new FieldErrorVM(f.getObjectName().replaceFirst("DTO$", ""), f.getField(), f.getCode()))
+            .map(f -> new FieldErrorVM(f.getObjectName(), f.getField(), f.getCode(), f.getDefaultMessage()))
             .collect(Collectors.toList());
 
-        Problem problem = Problem.builder()
+        ProblemBuilder problemBuilder = Problem.builder()
             .withType(ErrorConstants.CONSTRAINT_VIOLATION_TYPE)
             .withTitle("Method argument not valid")
             .withStatus(defaultConstraintViolationStatus())
-            .with(MESSAGE_KEY, ErrorConstants.ERR_VALIDATION)
-            .with(FIELD_ERRORS_KEY, fieldErrors)
+            .with("message", ErrorConstants.ERR_VALIDATION)
+            .with("fieldErrors", fieldErrors);
+
+        if (result.getTarget() instanceof LoginVM) {
+            Set<String> fields = fieldErrors.stream().map(FieldErrorVM::getField).collect(Collectors.toSet());
+            if (fields.size() == 2) {
+                updateErrorCodes(problemBuilder, SunCraftStatusCode.USERNAME_PASSWORD_INVALID);
+            } else {
+                for (String itr : fields) {
+                    if ("username".equals(itr)) {
+                        updateErrorCodes(problemBuilder, SunCraftStatusCode.USERNAME_INVALID);
+                    }
+                    if ("password".equals(itr)) {
+                        updateErrorCodes(problemBuilder, SunCraftStatusCode.PASSWORD_INVALID);
+                        //updateErrorCodes(problemBuilder, DigitalSafeStatusCode.BAD_CREDENTIALS);
+                    }
+                }
+            }
+        }
+
+        return create(ex, problemBuilder.build(), request);
+    }
+
+    private ResponseEntity<Problem> handleCustomException(URI type, String title, StatusType statusType, String message) {
+        Problem problem = Problem.builder()
+            .withType(type)
+            .withTitle(title)
+            .withStatus(statusType)
+            .with("message", message)
             .build();
-        return create(ex, problem, request);
+        return new ResponseEntity<Problem>(problem, null, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handleEmailAlreadyUsedException(suncrafterina.service.EmailAlreadyUsedException ex, NativeWebRequest request) {
-        EmailAlreadyUsedException problem = new EmailAlreadyUsedException();
-        return create(problem, request, HeaderUtil.createFailureAlert(applicationName,  false, problem.getEntityName(), problem.getErrorKey(), problem.getMessage()));
-    }
+    public ResponseEntity<Problem> handleNoSuchElementException(NoSuchElementException ex, NativeWebRequest request) {
+        ProblemBuilder problemBuilder = Problem.builder()
+            .withType(ErrorConstants.ENTITY_NOT_FOUND_TYPE)
+            .withTitle("Entity not found")
+            .withStatus(Status.NOT_FOUND)
+            .with("message", ErrorConstants.ENTITY_NOT_FOUND_TYPE);
 
-    @ExceptionHandler
-    public ResponseEntity<Problem> handleUsernameAlreadyUsedException(suncrafterina.service.UsernameAlreadyUsedException ex, NativeWebRequest request) {
-        LoginAlreadyUsedException problem = new LoginAlreadyUsedException();
-        return create(problem, request, HeaderUtil.createFailureAlert(applicationName,  false, problem.getEntityName(), problem.getErrorKey(), problem.getMessage()));
-    }
-
-    @ExceptionHandler
-    public ResponseEntity<Problem> handleInvalidPasswordException(suncrafterina.service.InvalidPasswordException ex, NativeWebRequest request) {
-        return create(new InvalidPasswordException(), request);
+        return create(ex, problemBuilder.build(), request);
     }
 
     @ExceptionHandler
     public ResponseEntity<Problem> handleBadRequestAlertException(BadRequestAlertException ex, NativeWebRequest request) {
-        return create(ex, request, HeaderUtil.createFailureAlert(applicationName, false, ex.getEntityName(), ex.getErrorKey(), ex.getMessage()));
+        return create(ex, request, HeaderUtil.createFailureAlert(ex.getEntityName(), ex.getErrorKey(), ex.getMessage()));
     }
 
     @ExceptionHandler
     public ResponseEntity<Problem> handleConcurrencyFailure(ConcurrencyFailureException ex, NativeWebRequest request) {
+
         Problem problem = Problem.builder()
             .withStatus(Status.CONFLICT)
-            .with(MESSAGE_KEY, ErrorConstants.ERR_CONCURRENCY_FAILURE)
+            .with("message", ErrorConstants.ERR_CONCURRENCY_FAILURE)
             .build();
         return create(ex, problem, request);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleAuthentication(AuthenticationException ex, NativeWebRequest request) {
+
+        SunCraftStatusCode code = null;
+        Map<String, Object> params = null;
+        String returnMessage = null;
+        if (ex.getCause() instanceof UserNotActivatedException || ex instanceof UserNotActivatedException) {
+            if (ex.getMessage().equals(SunCraftStatusCode.EMAIL_PHONE_NOT_VERIFIED.getReasonPhrase())) {
+                code = SunCraftStatusCode.EMAIL_PHONE_NOT_VERIFIED;
+            } else if (ex.getMessage().equals(SunCraftStatusCode.EMAIL_NOT_VERIFIED.getReasonPhrase())) {
+                code = SunCraftStatusCode.EMAIL_NOT_VERIFIED;
+            } else if (ex.getMessage().equals(SunCraftStatusCode.PHONE_NOT_VERIFIED.getReasonPhrase())) {
+                code = SunCraftStatusCode.PHONE_NOT_VERIFIED;
+            }
+        } else if (ex.getCause() instanceof CustomException) {
+            params = ((CustomException) ex.getCause()).getParameters();
+
+        } else {
+            code = SunCraftStatusCode.BAD_CREDENTIALS;
+        }
+
+
+        if (returnMessage == null) {
+            returnMessage = "error.http." + Status.UNAUTHORIZED;
+        }
+        ExceptionResponseEntity exceptionResponseEntity = new ExceptionResponseEntity
+            (ErrorConstants.DEFAULT_TYPE, Status.UNAUTHORIZED.getReasonPhrase(),
+                Status.UNAUTHORIZED, ex.getMessage(), null,returnMessage ,
+                request.getNativeRequest(HttpServletRequest.class).getRequestURI(), null, code,
+                params, messageSource);
+
+        return new ResponseEntity<>(exceptionResponseEntity.build(), null, HttpStatus.BAD_REQUEST);
+    }
+
+    private ProblemBuilder updateErrorCodes(ProblemBuilder problemBuilder, SunCraftStatusCode statusCode) {
+
+        String errorMessage = messageSource.getMessage(statusCode.getReasonPhrase(),
+            null, LocaleContextHolder.getLocale());
+        return problemBuilder.with("error", statusCode).with("error_message", errorMessage);
+        //   return problemBuilder.with("errorCode", statusCode).with("errorMessage", statusCode.getReasonPhrase());
     }
 }
