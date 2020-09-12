@@ -5,6 +5,8 @@ import lombok.Data;
 
 public class LoginProfileDTO {
 
+    private String token;
+
     private Long user_id;
 
     private String email;
@@ -24,6 +26,14 @@ public class LoginProfileDTO {
     private String currency;
 
     public LoginProfileDTO() {
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public Long getUser_id() {

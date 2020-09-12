@@ -91,6 +91,7 @@ public class UserJWTController {
         }else{
             throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.USERNAME_PASSWORD_INVALID,null);
         }
+        loginProfileDTO.setToken(jwt);
         loginProfileDTO.setRole(role);
         return new ResponseEntity<>(loginProfileDTO,HttpStatus.OK);
 
