@@ -1,5 +1,6 @@
 package suncrafterina.web.rest;
 
+import springfox.documentation.annotations.ApiIgnore;
 import suncrafterina.config.Constants;
 import suncrafterina.domain.User;
 import suncrafterina.repository.UserRepository;
@@ -58,6 +59,7 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/api")
+@ApiIgnore
 public class UserResource {
 
     private final Logger log = LoggerFactory.getLogger(UserResource.class);
@@ -91,6 +93,7 @@ public class UserResource {
      */
     @PostMapping("/users")
     @PreAuthorize("hasAuthority(\"" + AuthoritiesConstants.ADMIN + "\")")
+    @ApiIgnore
     public ResponseEntity<User> createUser(@Valid @RequestBody UserDTO userDTO) throws URISyntaxException {
         log.debug("REST request to save User : {}", userDTO);
 

@@ -341,6 +341,12 @@
             <groupId>io.dropwizard.metrics</groupId>
             <artifactId>metrics-core</artifactId>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-s3 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-aws-core</artifactId>
+        </dependency>
+
         <!-- jhipster-needle-maven-add-dependency -->
     </dependencies>
 

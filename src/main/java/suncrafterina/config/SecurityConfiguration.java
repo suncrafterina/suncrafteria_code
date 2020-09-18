@@ -80,6 +80,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/register-user").permitAll()
             .antMatchers("/api/verify-code").permitAll()
             .antMatchers("/api/resend-verification").permitAll()
+            .antMatchers("/api/forgot-password").permitAll()
+            .antMatchers("/api/resend-code").permitAll()
+            .antMatchers("/api/reset-password").permitAll()
             .antMatchers("/api/register").permitAll()
             .antMatchers("/api/activate").permitAll()
             .antMatchers("/api/account/reset-password/init").permitAll()
@@ -92,7 +95,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         .and()
             .httpBasic()
         .and()
-            .apply(securityConfigurerAdapter());
+            .apply(securityConfigurerAdapter())
+            .and().cors().disable();
         // @formatter:on
     }
 

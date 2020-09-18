@@ -86,12 +86,17 @@ public class UserService {
     }
 
     public Optional<User> requestPasswordReset(String mail) {
+        Optional<User> user1 = userRepository.findOneByEmailIgnoreCase(mail);
+        if(user1.isPresent()){
+            if (!user1.get().getActivated()){
+                throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.USER_NOT_ACTIVATED,null);
+            }
+        }
         return userRepository.findOneByEmailIgnoreCase(mail)
             .filter(User::getActivated)
             .map(user -> {
-                user.setResetKey(RandomUtil.generateResetKey());
+                user.setResetKey(helperService.generatePin());
                 user.setResetDate(Instant.now());
-                this.clearUserCaches(user);
                 return user;
             });
     }
@@ -126,7 +131,7 @@ public class UserService {
         // new user gets registration key
         newUser.setActivationKey(RandomUtil.generateActivationKey());
         Set<Authority> authorities = new HashSet<>();
-        authorityRepository.findById(AuthoritiesConstants.USER).ifPresent(authorities::add);
+        authorityRepository.findById(AuthoritiesConstants.SUB_ADMIN).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
         userRepository.save(newUser);
         this.clearUserCaches(newUser);
@@ -383,4 +388,30 @@ public class UserService {
         return user;
     }
 
+    public Optional<User> getUserByEmail(String email){
+        Optional<User> user = userRepository.findOneByEmailIgnoreCase(email);
+        if(user.isPresent()){
+            return user;
+        }
+        return null;
+    }
+
+     public User saveUser(User user){
+        return userRepository.save(user);
+     }
+
+    public Optional<User> resetPassword(String newPassword,String otp) {
+        log.debug("Reset user password for reset key {}", otp);
+        Optional<User> user = userRepository.findOneByResetKey(otp);
+        if(user.isPresent()){
+            if(!user.get().getResetDate().isAfter(Instant.now().minusSeconds(600))){
+                throw new CustomException(Status.BAD_REQUEST, SunCraftStatusCode.OTP_EXPIRED,null);
+            }
+            user.get().setPassword(passwordEncoder.encode(newPassword));
+            user.get().setResetKey(null);
+            user.get().setResetDate(null);
+            userRepository.save(user.get());
+        }
+        return user;
+    }
 }

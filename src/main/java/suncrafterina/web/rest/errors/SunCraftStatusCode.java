@@ -23,7 +23,9 @@ public enum SunCraftStatusCode implements StatusType {
     CURRENT_PASSWORD_NOT_MATCHED(10026,"password.not.matched"),
     VERIFICATION_CODE_NOT_MATCHED(10027, "verification.code.not.matched"),
     EMAIL_NOT_FOUND(10028, "email.not.found"),
-    VERIFICATION_CODE_EXPIRED(10029, "verification.code.expired");
+    VERIFICATION_CODE_EXPIRED(10029, "verification.code.expired"),
+    USER_NOT_ACTIVATED(10030,"user.not.activate"),
+    INCORRECT_OTP(10031, "incorrect.otp");
 
     private final int code;
     private final String reason;

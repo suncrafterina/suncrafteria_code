@@ -1,10 +1,12 @@
 package suncrafterina.web.rest;
 
 import org.zalando.problem.Status;
+import springfox.documentation.annotations.ApiIgnore;
 import suncrafterina.domain.User;
 import suncrafterina.repository.UserRepository;
 import suncrafterina.security.SecurityUtils;
 import suncrafterina.service.MailService;
+import suncrafterina.service.ResetPassword;
 import suncrafterina.service.UserService;
 import suncrafterina.service.dto.*;
 import suncrafterina.web.rest.errors.*;
@@ -59,6 +61,7 @@ public class AccountResource {
      */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
+    @ApiIgnore
     public void registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) {
    /*     if (!checkPasswordLength(managedUserVM.getPassword())) {
             throw new InvalidPasswordException();
@@ -76,6 +79,7 @@ public class AccountResource {
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the user couldn't be activated.
      */
     @GetMapping("/activate")
+    @ApiIgnore
     public void activateAccount(@RequestParam(value = "key") String key) {
         Optional<User> user = userService.activateRegistration(key);
         if (!user.isPresent()) {
@@ -90,6 +94,7 @@ public class AccountResource {
      * @return the login if the user is authenticated.
      */
     @GetMapping("/authenticate")
+    @ApiIgnore
     public String isAuthenticated(HttpServletRequest request) {
         log.debug("REST request to check if the current user is authenticated");
         return request.getRemoteUser();
@@ -102,6 +107,7 @@ public class AccountResource {
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the user couldn't be returned.
      */
     @GetMapping("/account")
+    @ApiIgnore
     public UserDTO getAccount() {
         return userService.getUserWithAuthorities()
             .map(UserDTO::new)
@@ -116,6 +122,7 @@ public class AccountResource {
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the user login wasn't found.
      */
     @PostMapping("/account")
+    @ApiIgnore
     public void saveAccount(@Valid @RequestBody UserDTO userDTO) {
         String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow(() -> new AccountResourceException("Current user login not found"));
         Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
@@ -137,6 +144,7 @@ public class AccountResource {
      * @throws InvalidPasswordException {@code 400 (Bad Request)} if the new password is incorrect.
      */
     @PostMapping(path = "/account/change-password")
+    @ApiIgnore
     public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
         if (!checkPasswordLength(passwordChangeDto.getNewPassword())) {
             throw new InvalidPasswordException();
@@ -150,6 +158,7 @@ public class AccountResource {
      * @param mail the mail of the user.
      */
     @PostMapping(path = "/account/reset-password/init")
+    @ApiIgnore
     public void requestPasswordReset(@RequestBody String mail) {
         Optional<User> user = userService.requestPasswordReset(mail);
         if (user.isPresent()) {
@@ -169,6 +178,7 @@ public class AccountResource {
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the password could not be reset.
      */
     @PostMapping(path = "/account/reset-password/finish")
+    @ApiIgnore
     public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
         if (!checkPasswordLength(keyAndPassword.getNewPassword())) {
             throw new InvalidPasswordException();
@@ -204,7 +214,9 @@ public class AccountResource {
      */
     @PostMapping("/verify-code")
     public  Map<String,String> verifyCode(@Valid @RequestBody VerificationCode verificationCode){
+        System.out.println("================================");
         Optional<User> user = userService.verification(verificationCode.getVerification_code());
+        System.out.println(user);
         if(!user.isPresent())
             throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.VERIFICATION_CODE_NOT_MATCHED,null);
         Map<String,String> data = new LinkedHashMap<>();
@@ -230,5 +242,45 @@ public class AccountResource {
         else
             throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.EMAIL_NOT_FOUND,null);
     }
+
+    @PostMapping("/forgot-password")
+    public Map<String,String> forgotPassword(@Valid @RequestBody EmailDto emailDto){
+        Optional<User> user = userService.requestPasswordReset(emailDto.getEmail().trim());
+        if(user.isPresent()){
+            mailService.sendPasswordResetMail(user.get());
+            Map<String,String> data = new LinkedHashMap<>();
+            data.put("email",emailDto.getEmail());
+            data.put("message","6-digit OTP is sent on your Registered Email Address");
+            return data;
+        }else {
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.EMAIL_NOT_FOUND,null);
+        }
+    }
+
+    @PostMapping("/resend-code")
+    public Map<String,String> resendCode(@Valid @RequestBody EmailDto emailDto){
+        Optional<User> user = userService.requestPasswordReset(emailDto.getEmail().trim());
+        if(user.isPresent()){
+            mailService.sendPasswordResetMail(user.get());
+            Map<String,String> data = new LinkedHashMap<>();
+            data.put("email",emailDto.getEmail());
+            data.put("message","6-digit OTP is resent on your Registered Email Address");
+            return data;
+        }else {
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.EMAIL_NOT_FOUND,null);
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public Map<String,String> resetCode(@Valid @RequestBody ResetPassword resetPassword) {
+        Optional<User> user = userService.resetPassword(resetPassword.getNew_password(),resetPassword.getOtp());
+        if (!user.isPresent()) {
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.INCORRECT_OTP,null);
+        }
+        Map<String,String> data = new LinkedHashMap<>();
+        data.put("message","Password Reset Successfully");
+        return data;
+    }
+
 
 }
