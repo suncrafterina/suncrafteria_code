@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <changeSet id="1600497221593" author="matellio">
+        <createTable tableName="jhi_product">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="image_file" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="image_file_thumb" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="video_file" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="sku" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="manufacturer" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="model" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="price" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dimension" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="length_unit" type="smallint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="weight" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="weight_unit" type="smallint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="category_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vendor_show_status" type="boolean" defaultValue="true">
+                <constraints nullable="true"/>
+            </column>
+            <column name="admin_show_status" type="boolean" defaultValue="true">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="true"/>
+            </column>
+            <column name="updated_at" type="timestamp">
+                <constraints nullable="true"/>
+            </column>
+            <column name="slug" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="is_sponsored" type="boolean" defaultValue="false">
+                <constraints nullable="true"/>
+            </column>
+            <column name="is_new_arrival" type="boolean" defaultValue="false">
+                <constraints nullable="true"/>
+            </column>
+            <column name="is_top_selling" type="boolean" defaultValue="false">
+                <constraints nullable="true"/>
+            </column>
+
+
+        </createTable>
+
+        <addForeignKeyConstraint baseColumnNames="user_id"
+                                 baseTableName="jhi_product"
+                                 constraintName="fk_product_user_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="category_id"
+                                 baseTableName="jhi_product"
+                                 constraintName="fk_product_category_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_category"/>
+    </changeSet>
+</databaseChangeLog>

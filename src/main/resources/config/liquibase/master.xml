@@ -15,6 +15,9 @@
 
     <include file="config/liquibase/changelog/00000000000000_initial_schema.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/1594193546707_jhi_user_alter.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/1600483244469_jhi_category_schema.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/1600497221593 _jhi_product_schema.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
 </databaseChangeLog>
+

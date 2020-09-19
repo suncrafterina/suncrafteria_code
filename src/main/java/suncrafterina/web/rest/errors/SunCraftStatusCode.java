@@ -25,7 +25,9 @@ public enum SunCraftStatusCode implements StatusType {
     EMAIL_NOT_FOUND(10028, "email.not.found"),
     VERIFICATION_CODE_EXPIRED(10029, "verification.code.expired"),
     USER_NOT_ACTIVATED(10030,"user.not.activate"),
-    INCORRECT_OTP(10031, "incorrect.otp");
+    INCORRECT_OTP(10031, "incorrect.otp"),
+    IMAGE_NOT_UPLOADED(10032,"product.image.not.uploaded"),
+    CATEGORY_NOT_FOUND(20001,"invalid.category");
 
     private final int code;
     private final String reason;
