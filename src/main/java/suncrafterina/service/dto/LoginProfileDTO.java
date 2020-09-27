@@ -2,6 +2,7 @@ package suncrafterina.service.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import suncrafterina.enums.Currency;
 
 public class LoginProfileDTO {
 
@@ -23,7 +24,7 @@ public class LoginProfileDTO {
 
     private String role;
 
-    private String currency;
+    private Currency currency;
 
     public LoginProfileDTO() {
     }
@@ -100,11 +101,11 @@ public class LoginProfileDTO {
         this.role = role;
     }
 
-    public String getCurrency() {
+    public Currency getCurrency() {
         return currency;
     }
 
-    public void setCurrency(String currency) {
+    public void setCurrency(Currency currency) {
         this.currency = currency;
     }
 

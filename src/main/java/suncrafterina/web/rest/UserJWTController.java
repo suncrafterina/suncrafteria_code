@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.zalando.problem.Status;
 import suncrafterina.domain.User;
+import suncrafterina.enums.Currency;
 import suncrafterina.repository.UserRepository;
 import suncrafterina.security.jwt.JWTFilter;
 import suncrafterina.security.jwt.TokenProvider;
@@ -80,7 +81,12 @@ public class UserJWTController {
         loginProfileDTO.setLast_name(user.getLastName());
         loginProfileDTO.setImage_file(user.getImageUrl());
         loginProfileDTO.setProfile_status(false);
-        loginProfileDTO.setCurrency("INR");
+        if(user.getCurrency().equalsIgnoreCase("USD"))
+            loginProfileDTO.setCurrency(Currency.USD);
+        else if(user.getCurrency().equalsIgnoreCase("INR"))
+            loginProfileDTO.setCurrency(Currency.INR);
+        else
+            loginProfileDTO.setCurrency(Currency.EURO);
         String role = userService.getRole(user);
         if( role.equalsIgnoreCase("ROLE_SUB_ADMIN")){
             role = "admin";

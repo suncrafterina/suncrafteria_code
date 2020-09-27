@@ -27,7 +27,9 @@ public enum SunCraftStatusCode implements StatusType {
     USER_NOT_ACTIVATED(10030,"user.not.activate"),
     INCORRECT_OTP(10031, "incorrect.otp"),
     IMAGE_NOT_UPLOADED(10032,"product.image.not.uploaded"),
-    CATEGORY_NOT_FOUND(20001,"invalid.category");
+    CATEGORY_NOT_FOUND(10033,"invalid.category"),
+    ALREADY_EXISTS(10034,"already.exist"),
+    NOT_FOUND(10035,"not.found");
 
     private final int code;
     private final String reason;

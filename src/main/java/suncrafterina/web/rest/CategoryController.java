@@ -178,7 +178,7 @@ public class CategoryController {
     }
 
     @GetMapping("/category-level-two/{category_id}")
-    public ResponseEntity<List<CategoryLevelTwoDto>> getAllCategoriesLevelThree(@PathVariable(value = "category_id") Long category_id, @RequestParam(required = false) String search, Pageable pageable) {
+    public ResponseEntity<List<CategoryLevelTwoDto>> getAllCategoriesLevelTwo(@PathVariable(value = "category_id") Long category_id, @RequestParam(required = false) String search, Pageable pageable) {
         Category category = categoryService.getById(category_id);
         if(category == null)
             throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.CATEGORY_NOT_FOUND,null);
