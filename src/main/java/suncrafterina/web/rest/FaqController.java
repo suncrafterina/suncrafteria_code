@@ -36,7 +36,8 @@ public class FaqController {
     @PostMapping("/faq")
     public ResponseEntity<ResponseStatusDTO> addFAQs(@Valid @RequestBody FaqsDTO faqDto)
     {
-        if(faqService.findByTitle(faqDto.getTitle())!=null){
+        Faqs faqs1 = faqService.findByTitle(faqDto.getTitle());
+        if(faqs1 != null && faqs1.getStatus()){
             throw new CustomException(Status.BAD_REQUEST, SunCraftStatusCode.ALREADY_EXISTS,null);
         }
 
@@ -63,7 +64,7 @@ public class FaqController {
     public ResponseEntity<Faqs> getFAQsById(@PathVariable("id") Long id)
     {
         Faqs faqs = faqService.findFaqById(id);
-        if(faqs==null)
+        if(faqs==null || !faqs.getStatus())
             throw new CustomException(Status.NOT_FOUND,SunCraftStatusCode.NOT_FOUND,null);
 
         return new ResponseEntity<>(faqs,HttpStatus.OK);
@@ -73,14 +74,13 @@ public class FaqController {
     public ResponseEntity<ResponseStatusDTO> updateFAQs(@RequestBody FaqsDTO faqDto)
     {
         Faqs faqs = faqService.findFaqById(faqDto.getId());
-        if(faqs==null)
+        if(faqs==null || !faqs.getStatus())
             throw new CustomException(Status.NOT_FOUND,SunCraftStatusCode.NOT_FOUND,null);
         Faqs faqs1  = faqService.findByTitle(faqDto.getTitle());
-
-        if(faqs.getId() != faqs1.getId()){
+        if(faqs1 != null)
+        if(faqs.getId() != faqs1.getId() && faqs1.getStatus()){
             throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.ALREADY_EXISTS,null);
         }
-
         faqs.setTitle(faqDto.getTitle().trim());
         faqs.setAnswer(faqDto.getAnswer().trim());
         faqs.setUpdated_at(LocalDateTime.now());

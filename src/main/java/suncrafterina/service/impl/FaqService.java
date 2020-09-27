@@ -51,6 +51,9 @@ public class FaqService {
     }
 
     public Faqs findFaqById(Long id){
-        return faqsRepository.findOneById(id).get();
+        Optional<Faqs> faqs = faqsRepository.findOneById(id);
+        if(faqs.isPresent())
+            return faqs.get();
+        return null;
     }
 }
