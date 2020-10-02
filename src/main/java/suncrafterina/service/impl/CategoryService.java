@@ -52,15 +52,6 @@ public class CategoryService {
         }
         return null;
     }
-/*
-    public Category getBySortingOrder(Long sortingOrder,Long parentId){
-        Optional<Category> category=categoryRepository.findBySortingOrder(sortingOrder,parentId);
-        if(category.isPresent()){
-            return category.get();
-        }
-        return null;
-    }
-*/
     public Category getByIdAndTitle(Long id,String title){
         Optional<Category> category=categoryRepository.findByIdAndTitle(id,title);
         if(category.isPresent()){
@@ -69,15 +60,6 @@ public class CategoryService {
         return null;
     }
 
-   /* public Category getByIdAndSortingOrder(Long id,Long sortingOrder,Long parentId){
-        Optional<Category> category=categoryRepository.findByIdAndSortingOrder(id,sortingOrder,parentId);
-        if(category.isPresent()){
-            return category.get();
-        }
-        return null;
-    }
-
-    */
 
     public Page<Object[]> getCategoriesLevelTwo(Long category_id,String search,Pageable pageable){
         return categoryRepository.findCategoriesLevelTwo(category_id,search,pageable);
@@ -96,4 +78,8 @@ public class CategoryService {
     }
 
      */
+
+    public List<Object[]> getCategoriesLevelThree(){
+        return  categoryRepository.findCategoriesLevelThree();
+    }
 }

@@ -79,4 +79,11 @@ public interface CategoryRepository extends JpaRepository<Category,Long> {
     @Query(value="select c.id,c.title from jhi_category c where " +
         "lower(c.title) like lower(concat('%', ?1,'%')) LIMIT 10 ",nativeQuery=true)
     List<Object[]> searchByCategoryName(String search);
+
+    @Query(value="SELECT c1.id as id, concat(c2.title,' > ',c1.title) as title " +
+        "from jhi_category c1 " +
+        "LEFT OUTER JOIN jhi_category c2 " +
+        "ON c1.parent_id = c2.id " +
+        "where c1.category_level=1",nativeQuery = true)
+    public List<Object[]> findCategoriesLevelThree();
 }
