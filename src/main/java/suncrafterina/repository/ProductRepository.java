@@ -61,6 +61,12 @@ public interface ProductRepository extends JpaRepository<Product,Long> {
         ")",nativeQuery = true)
     public Page<Object[]> findAllProduct(Long userId, String search, Pageable pageable);
 
+    @Query(value="select p.id,p.name from jhi_product p where " +
+        "p.admin_show_status = true and p.vendor_show_status = true " +
+        "and " +
+        "lower(p.name) like lower(concat('%', ?1,'%')) LIMIT 10 ",nativeQuery=true)
+    List<Object[]> searchByProductName(String search);
+
 
 /*
     @Query(value = "SELECT product_id,SUM(rating) as sum_rating,COUNT(1) as total_count,(CAST(SUM(rating) as float)/CAST(COUNT(1) as float)) as rating " +

@@ -10,6 +10,7 @@ import suncrafterina.repository.CategoryRepository;
 import suncrafterina.repository.ProductRepository;
 import suncrafterina.service.HelperService;
 import suncrafterina.service.UserService;
+import suncrafterina.service.dto.SearchDTO;
 
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
@@ -87,6 +88,18 @@ public class ProductService {
     public Page<Object[]> getAllProduct(Long userId, String search, Pageable pageable){
         return productRepository.findAllProduct(userId,search,pageable);
     }
+
+    public List<SearchDTO> searchByProductName(String search){
+        List<Object[]> objects = productRepository.searchByProductName(search);
+        List<SearchDTO> searchDTOS = new LinkedList<>();
+        for (Object[] obj : objects){
+            BigInteger id = (BigInteger) obj[0];
+            String name = (String) obj[1];
+            searchDTOS.add(new SearchDTO(id.longValue(),name));
+        }
+        return searchDTOS;
+    }
+
 /*
     public Double findRating(Long productId){
         List<Object[]> ratingObject = productRepository.findRating(productId);

@@ -232,5 +232,67 @@ public class ProductController {
         return responseEntity;
     }
 
+    @PatchMapping("/product/vendor-status/{id}")
+    public ResponseEntity<ResponseStatusDTO> changeVendorStatus(@PathVariable Long id){
+        String login = SecurityUtils.getCurrentUserLogin().get();
+        User user = userService.getUserByEmail(login).get();
+        Product product = productService.getById(id);
+        if(product == null){
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.NOT_FOUND,null);
+        }
+        if(!product.getUser().getEmail().equalsIgnoreCase(user.getEmail())){
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.NOT_FOUND,null);
+        }
+        product.setVendor_show_status(!product.getVendor_show_status());
+        productService.save(product);
+        ResponseStatusDTO status = new ResponseStatusDTO("Product status changed.", HttpStatus.OK.value(), System.currentTimeMillis());
+        ResponseEntity responseEntity = new ResponseEntity<ResponseStatusDTO>(status, HttpStatus.OK);
+        return responseEntity;
+    }
+
+    @PatchMapping("/product/admin-status/{id}")
+    public ResponseEntity<ResponseStatusDTO> changeAdminStatus(@PathVariable Long id){
+        String login = SecurityUtils.getCurrentUserLogin().get();
+        User user = userService.getUserByEmail(login).get();
+        Product product = productService.getById(id);
+        if(product == null){
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.NOT_FOUND,null);
+        }
+        product.setAdmin_show_status(!product.getAdmin_show_status());
+        productService.save(product);
+        ResponseStatusDTO status = new ResponseStatusDTO("Product status changed.", HttpStatus.OK.value(), System.currentTimeMillis());
+        ResponseEntity responseEntity = new ResponseEntity<ResponseStatusDTO>(status, HttpStatus.OK);
+        return responseEntity;
+    }
+
+    @PatchMapping("/product/sponsored/{id}")
+    public ResponseEntity<ResponseStatus> sponsoredStatus(@PathVariable Long id){
+        String login = SecurityUtils.getCurrentUserLogin().get();
+        User user = userService.getUserByEmail(login).get();
+        Product product = productService.getById(id);
+        if(product == null){
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.NOT_FOUND,null);
+        }
+        product.setIs_sponsored(!product.getIs_sponsored());
+        productService.save(product);
+        ResponseStatusDTO status = new ResponseStatusDTO("Product sponsored status changed.", HttpStatus.OK.value(), System.currentTimeMillis());
+        ResponseEntity responseEntity = new ResponseEntity<ResponseStatusDTO>(status, HttpStatus.OK);
+        return responseEntity;
+    }
+
+    @PatchMapping("/product/new-arrival/{id}")
+    public ResponseEntity<ResponseStatus> newArrivalStatus(@PathVariable Long id){
+        String login = SecurityUtils.getCurrentUserLogin().get();
+        User user = userService.getUserByEmail(login).get();
+        Product product = productService.getById(id);
+        if(product == null){
+            throw new CustomException(Status.BAD_REQUEST,SunCraftStatusCode.NOT_FOUND,null);
+        }
+        product.setIs_new_arrival(!product.getIs_new_arrival());
+        productService.save(product);
+        ResponseStatusDTO status = new ResponseStatusDTO("Product new arrival status changed.", HttpStatus.OK.value(), System.currentTimeMillis());
+        ResponseEntity responseEntity = new ResponseEntity<ResponseStatusDTO>(status, HttpStatus.OK);
+        return responseEntity;
+    }
 
 }
