@@ -22,7 +22,11 @@
     <include file="config/liquibase/changelog/1601204763489_jhi_client.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/1601291571257_product_user_rating_schema.xml" relativeToChangelogFile="false"/>
     <include file="config/liquibase/changelog/1601695681654_jhi_banner_schema.xml" relativeToChangelogFile="false"/>
-    <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
+    <include file="config/liquibase/changelog/1601781833630_jhi_customer_schema.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/1601783134977_country_schema.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/1601783172940_state_schema.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/1601783208104_city_schema.xml" relativeToChangelogFile="false"/>
+      <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
 </databaseChangeLog>
 

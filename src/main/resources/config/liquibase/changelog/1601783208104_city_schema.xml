@@ -5,41 +5,41 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd
                         http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
-    <!--
-        Added the entity Discharge Planner.
-    -->
-    <changeSet id="1600483244469" author="suncraft">
-        <createTable tableName="jhi_category">
+
+    <changeSet id="1601783208104" author="suncraft">
+        <createTable tableName="jhi_city">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="title" type="VARCHAR(255)">
+            <column name="state_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="image_file" type="VARCHAR(255)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="parent_id" type="bigint">
-                <constraints nullable="true"/>
-            </column>
-            <column name="category_level" type="smallint">
+            <column name="name" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
             <column name="created_at" type="timestamp">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="updated_at" type="timestamp">
                 <constraints nullable="true"/>
             </column>
-            <column name="icon_file" type="VARCHAR(255)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="slug" type="VARCHAR(255)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="image_file_thumb" type="VARCHAR(255)">
-                <constraints nullable="true"/>
-            </column>
         </createTable>
+
+        <addForeignKeyConstraint baseColumnNames="state_id"
+                                 baseTableName="jhi_city"
+                                 constraintName="fk_state_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_state"/>
+
+
+        <loadData
+            file="config/liquibase/data/city.csv"
+            separator=","
+            tableName="jhi_city">
+            <column  header="id" name="id" type="numeric"/>
+            <column  header="name" name="name" type="string"/>
+            <column  header="state_id" name="state_id" type="numeric"/>
+        </loadData>
+
     </changeSet>
 </databaseChangeLog>

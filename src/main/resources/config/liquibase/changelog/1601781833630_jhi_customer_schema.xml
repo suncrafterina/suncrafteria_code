@@ -5,41 +5,42 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd
                         http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
-    <!--
-        Added the entity Discharge Planner.
-    -->
-    <changeSet id="1600483244469" author="suncraft">
-        <createTable tableName="jhi_category">
+
+    <changeSet id="1601781833630" author="suncraft">
+        <createTable tableName="jhi_customer">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="title" type="VARCHAR(255)">
+            <column name="user_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="image_file" type="VARCHAR(255)">
+            <column name="phone_number" type="VARCHAR(255)">
                 <constraints nullable="true"/>
             </column>
-            <column name="parent_id" type="bigint">
+            <column name="age" type="int">
                 <constraints nullable="true"/>
             </column>
-            <column name="category_level" type="smallint">
-                <constraints nullable="false"/>
-            </column>
-            <column name="created_at" type="timestamp">
-                <constraints nullable="false"/>
-            </column>
-            <column name="updated_at" type="timestamp">
+            <column name="gender" type="VARCHAR(255)">
                 <constraints nullable="true"/>
             </column>
-            <column name="icon_file" type="VARCHAR(255)">
+            <column name="image_url" type="VARCHAR(255)">
                 <constraints nullable="true"/>
             </column>
-            <column name="slug" type="VARCHAR(255)">
+            <column name="status" type="boolean" defaultValue="false">
                 <constraints nullable="true"/>
             </column>
-            <column name="image_file_thumb" type="VARCHAR(255)">
+            <column name="is_active" type="boolean" defaultValue="true">
+                <constraints nullable="true"/>
+            </column>
+            <column name="stripe_customer_id" type="VARCHAR(255)">
                 <constraints nullable="true"/>
             </column>
         </createTable>
+        <addForeignKeyConstraint baseColumnNames="user_id"
+                                 baseTableName="jhi_customer"
+                                 constraintName="customer_fk_user_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"/>
     </changeSet>
 </databaseChangeLog>
+

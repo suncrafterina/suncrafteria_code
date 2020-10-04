@@ -8,7 +8,7 @@
     <!--
         Added the entity Discharge Planner.
     -->
-    <changeSet id="1601183707748" author="matellio">
+    <changeSet id="1601183707748" author="suncraft">
         <createTable tableName="jhi_faq">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>

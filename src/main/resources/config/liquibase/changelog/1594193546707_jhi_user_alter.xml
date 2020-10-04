@@ -6,7 +6,7 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd
                         http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 
-    <changeSet id="1594193546707" author="matellio">
+    <changeSet id="1594193546707" author="suncraft">
         <addColumn catalogName="cat"
                    schemaName="public"
                    tableName="jhi_user">
